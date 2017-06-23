@@ -117,14 +117,18 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
       });
         
       socket.on('move', function (msg) {
-          
-            if (game.game_over() === true){
+                 
+                if (serverGame && msg.gameId === serverGame.id) {
+                   game.move(msg.move);
+                   board.position(game.fen());
+                    
+                    if (game.game_over() === true){
                         stopTimerforPlayer1();
                         stopTimerforPlayer2();
                     } 
                     else {
                                     //timer
-                            if (game.turn() === 'b') {
+                            if (game.turn() === 'w') {
 
                                 htmlseconds1 = document.getElementById("player1timer").innerHTML;
                                 splitseconds1 = htmlseconds1.split(':');                
@@ -141,7 +145,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
 
 
                             }
-                             if (game.turn() === 'w') {
+                             if (game.turn() === 'b') {
                                 htmlseconds2 = document.getElementById("player2timer").innerHTML;
                                 splitseconds2 = htmlseconds2.split(':');                
                                 //minutes are worth 60 seconds. 
@@ -157,14 +161,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
 
                             }
                     }
-        
-        if (msg.playeremitted !== username) {
-                if (serverGame && msg.gameId === serverGame.id) {
-                   game.move(msg.move);
-                   board.position(game.fen());
                 }
-            
-        }
   
       });
      
