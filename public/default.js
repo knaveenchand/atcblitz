@@ -119,7 +119,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
       socket.on('move', function (msg) {
         if (serverGame && msg.gameId === serverGame.id) {
            game.move(msg.move);
-           board.position(game.fen());
+           //board.position(game.fen());
             
             if (game.game_over() === true){
                 stopTimerforPlayer1();
