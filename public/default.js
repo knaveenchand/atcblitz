@@ -117,53 +117,55 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
       });
         
       socket.on('move', function (msg) {
-        if (serverGame && msg.gameId === serverGame.id) {
-           game.move(msg.move);
-           board.position(game.fen());
-            
+          
             if (game.game_over() === true){
-                stopTimerforPlayer1();
-                stopTimerforPlayer2();
-            } 
-            else {
-                            //timer
-                    if (game.turn() === 'w') {
-
-                        htmlseconds1 = document.getElementById("player1timer").innerHTML;
-                        splitseconds1 = htmlseconds1.split(':');                
-                        //minutes are worth 60 seconds. 
-                        fiveMinutes1 = ((+splitseconds1[0])*60) + (+splitseconds1[1]);
-
                         stopTimerforPlayer1();
-                        startTimerforPlayer1(fiveMinutes1, display1);
-
-                        //stop timer for opponent
-                        htmlseconds2 = document.getElementById("player2timer").innerHTML;
                         stopTimerforPlayer2();
-                        document.getElementById("player2timer").innerHTML = htmlseconds2;
+                    } 
+                    else {
+                                    //timer
+                            if (game.turn() === 'b') {
+
+                                htmlseconds1 = document.getElementById("player1timer").innerHTML;
+                                splitseconds1 = htmlseconds1.split(':');                
+                                //minutes are worth 60 seconds. 
+                                fiveMinutes1 = ((+splitseconds1[0])*60) + (+splitseconds1[1]);
+
+                                stopTimerforPlayer1();
+                                startTimerforPlayer1(fiveMinutes1, display1);
+
+                                //stop timer for opponent
+                                htmlseconds2 = document.getElementById("player2timer").innerHTML;
+                                stopTimerforPlayer2();
+                                document.getElementById("player2timer").innerHTML = htmlseconds2;
 
 
+                            }
+                             if (game.turn() === 'w') {
+                                htmlseconds2 = document.getElementById("player2timer").innerHTML;
+                                splitseconds2 = htmlseconds2.split(':');                
+                                //minutes are worth 60 seconds. 
+                                fiveMinutes2 = ((+splitseconds2[0])*60) + (+splitseconds2[1]);
+
+                                stopTimerforPlayer2();
+                                startTimerforPlayer2(fiveMinutes2, display2);
+
+                                //stop timer for opponent
+                                htmlseconds1 = document.getElementById("player1timer").innerHTML;
+                                stopTimerforPlayer1();
+                                document.getElementById("player1timer").innerHTML = htmlseconds1;
+
+                            }
                     }
-                     if (game.turn() === 'b') {
-                        htmlseconds2 = document.getElementById("player2timer").innerHTML;
-                        splitseconds2 = htmlseconds2.split(':');                
-                        //minutes are worth 60 seconds. 
-                        fiveMinutes2 = ((+splitseconds2[0])*60) + (+splitseconds2[1]);
-
-                        stopTimerforPlayer2();
-                        startTimerforPlayer2(fiveMinutes2, display2);
-
-                        //stop timer for opponent
-                        htmlseconds1 = document.getElementById("player1timer").innerHTML;
-                        stopTimerforPlayer1();
-                        document.getElementById("player1timer").innerHTML = htmlseconds1;
-
-                    }
-            }
-            
-
+        
+        if (msg.playeremitted !== username) {
+                if (serverGame && msg.gameId === serverGame.id) {
+                   game.move(msg.move);
+                   board.position(game.fen());
+                }
             
         }
+  
       });
      
       
@@ -333,7 +335,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
                     }
             }
             
-           socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen()});
+           socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen(), playeremitted: username });
             
 
 
