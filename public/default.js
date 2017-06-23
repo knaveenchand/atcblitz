@@ -1,3 +1,66 @@
+var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
+    fiveMinutes1 = 60 * 1,
+    fiveMinutes2 = 60 * 1,
+        display1 = document.querySelector('#player1timer'),
+        display2 = document.querySelector('#player2timer');
+    var setIntervalPlayer1, setIntervalPlayer2;
+
+        function startTimerforPlayer1(duration, display) {
+            var timer = duration, minutes, seconds;
+            setIntervalPlayer1 = setInterval(function () {
+                minutes = parseInt(timer / 60, 10)
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = minutes + ":" + seconds;
+
+                if (--timer <= 0) {
+                    timer = 0;
+                        //stopTimerforPlayer1();
+                        var modal = document.getElementById('myModal');
+                        console.log(modal);
+                        modal.style.display = "block";
+                            stopTimerforPlayer1();
+                            stopTimerforPlayer2();
+
+                }
+            }, 1000);
+
+        }
+
+        function startTimerforPlayer2(duration, display) {
+            var timer = duration, minutes, seconds;
+            setIntervalPlayer2 = setInterval(function () {
+                minutes = parseInt(timer / 60, 10)
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = minutes + ":" + seconds;
+
+                if (--timer <= 0) {
+                    timer = 0;
+                        //stopTimerforPlayer2();
+                        var modal = document.getElementById('myModal');
+                        console.log(modal);
+                        modal.style.display = "block";
+                    stopTimerforPlayer1();
+                    stopTimerforPlayer2();
+                }
+            }, 1000);
+
+        }
+
+        function stopTimerforPlayer1(){
+            clearInterval(setIntervalPlayer1);
+        }
+        function stopTimerforPlayer2(){
+            clearInterval(setIntervalPlayer2);
+        } 
+
 
 (function () {
     
@@ -57,6 +120,49 @@
         if (serverGame && msg.gameId === serverGame.id) {
            game.move(msg.move);
            board.position(game.fen());
+            
+            if (game.game_over() === true){
+                stopTimerforPlayer1();
+                stopTimerforPlayer2();
+            } 
+            else {
+                            //timer
+                    if (game.turn() === 'w') {
+
+                        htmlseconds1 = document.getElementById("player1timer").innerHTML;
+                        splitseconds1 = htmlseconds1.split(':');                
+                        //minutes are worth 60 seconds. 
+                        fiveMinutes1 = ((+splitseconds1[0])*60) + (+splitseconds1[1]);
+
+                        stopTimerforPlayer1();
+                        startTimerforPlayer1(fiveMinutes1, display1);
+
+                        //stop timer for opponent
+                        htmlseconds2 = document.getElementById("player2timer").innerHTML;
+                        stopTimerforPlayer2();
+                        document.getElementById("player2timer").innerHTML = htmlseconds2;
+
+
+                    }
+                     if (game.turn() === 'b') {
+                        htmlseconds2 = document.getElementById("player2timer").innerHTML;
+                        splitseconds2 = htmlseconds2.split(':');                
+                        //minutes are worth 60 seconds. 
+                        fiveMinutes2 = ((+splitseconds2[0])*60) + (+splitseconds2[1]);
+
+                        stopTimerforPlayer2();
+                        startTimerforPlayer2(fiveMinutes2, display2);
+
+                        //stop timer for opponent
+                        htmlseconds1 = document.getElementById("player1timer").innerHTML;
+                        stopTimerforPlayer1();
+                        document.getElementById("player1timer").innerHTML = htmlseconds1;
+
+                    }
+            }
+            
+
+            
         }
       });
      
@@ -153,8 +259,16 @@
                
           game = serverGame.board ? new Chess(serverGame.board) : new Chess();
           board = new ChessBoard('game-board', cfg);
+            var t = "01:00";
+            document.getElementById("player1timer").innerHTML = t;
+            document.getElementById("player2timer").innerHTML = t;
+        
+
+
       }
-       
+ 
+     
+      
       // do not pick up pieces if the game is over
       // only pick up pieces for the side to move
       var onDragStart = function(source, piece, position, orientation) {
@@ -166,7 +280,6 @@
         }
       };  
       
-    
       
       var onDrop = function(source, target) {
         // see if the move is legal
@@ -179,8 +292,52 @@
         // illegal move
         if (move === null) { 
           return 'snapback';
-        } else {
+        } else {       
+            if (game.game_over() === true){
+                stopTimerforPlayer1();
+                stopTimerforPlayer2();
+            } 
+            else {
+                            //timer
+                    if (game.turn() === 'w') {
+
+                        htmlseconds1 = document.getElementById("player1timer").innerHTML;
+                        splitseconds1 = htmlseconds1.split(':');                
+                        //minutes are worth 60 seconds. 
+                        fiveMinutes1 = ((+splitseconds1[0])*60) + (+splitseconds1[1]);
+
+                        stopTimerforPlayer1();
+                        startTimerforPlayer1(fiveMinutes1, display1);
+
+                        //stop timer for opponent
+                        htmlseconds2 = document.getElementById("player2timer").innerHTML;
+                        stopTimerforPlayer2();
+                        document.getElementById("player2timer").innerHTML = htmlseconds2;
+
+
+                    }
+                     if (game.turn() === 'b') {
+                        htmlseconds2 = document.getElementById("player2timer").innerHTML;
+                        splitseconds2 = htmlseconds2.split(':');                
+                        //minutes are worth 60 seconds. 
+                        fiveMinutes2 = ((+splitseconds2[0])*60) + (+splitseconds2[1]);
+
+                        stopTimerforPlayer2();
+                        startTimerforPlayer2(fiveMinutes2, display2);
+
+                        //stop timer for opponent
+                        htmlseconds1 = document.getElementById("player1timer").innerHTML;
+                        stopTimerforPlayer1();
+                        document.getElementById("player1timer").innerHTML = htmlseconds1;
+
+                    }
+            }
+            
            socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen()});
+            
+
+
+            
         }
       
       };

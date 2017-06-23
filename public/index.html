@@ -14,7 +14,7 @@
       <button id='login'>Login</button>
     </div>
     <div class="page lobby" id='page-lobby'>
-      <h1>Real Chess</h1>
+      <h1>ATC Platform</h1>
       <h2 id='userLabel'></h2>
       <h3>Active games</h3>
       <div id='gamesList'>
@@ -28,9 +28,22 @@
     <div class="page game" id='page-game'>
       <button id='game-back'>Back</button>
       <button id='game-resign'>Resign</button>
+        <div id='player1'><span id='player1name'>White</span>: <span id='player1timer'></span></div>
+        <div id='player2'><span id='player2name'>Black</span>: <span id='player2timer'></span></div>
+        <div id="info-status"></div>
       <div id='game-board' style="width: 400px">
       </div>
     </div>
+    
+    <!-- The Modal -->
+<div id="myModal" class="modal">
+
+  <!-- Modal content -->
+  <div class="modal-content">
+    <p>Some text in the Modal..</p>
+  </div>
+
+</div>
 
     <script src="lib/socket.io-1.2.0.js"></script>
     <script src="lib/jquery-1.11.1.js"></script>
