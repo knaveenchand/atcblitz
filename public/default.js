@@ -173,6 +173,7 @@ function startTimerforPlayer1(duration, display) {
         
     socket.on('timer_w', function(count){
           
+        var minutes, seconds;
                 minutes = parseInt(count / 60, 10)
                 seconds = parseInt(count % 60, 10);
 
@@ -183,6 +184,8 @@ function startTimerforPlayer1(duration, display) {
       });
         
     socket.on('timer_b', function(count){
+        
+        var minutes, seconds;
           
                 minutes = parseInt(count / 60, 10)
                 seconds = parseInt(count % 60, 10);
