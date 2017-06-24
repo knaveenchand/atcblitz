@@ -6,7 +6,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
     
     var fiveMinutes1 = chesstimer * 1;
     var fiveMinutes2 = chesstimer * 1;
-    var t = "01:00";
+    var t = "30:00";
     var initial_timer_for_white = chesstimer;
     var initial_interval_for_black = chesstimer*1000;
     var generic_interval = 1000;
