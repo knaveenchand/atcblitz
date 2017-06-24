@@ -105,7 +105,7 @@ io.on('connection', function(socket) {
         counter_black = msg.timer_black;
         if (msg.now_playing === 'w'){
             servertimer_white = setInterval(function(){
-                io.in(msg.gameId).emit('timer_w', msg.timer_white );
+                io.in(msg.gameId).emit('timer_w', counter_white );
                 counter_white--
                 if (counter_white === 0){
                 io.in(msg.gameId).emit('timer_w', '0' );
@@ -119,7 +119,7 @@ io.on('connection', function(socket) {
         
         if (msg.now_playing === 'b'){
             servertimer_black = setInterval(function(){
-                io.in(msg.gameId).emit('timer_b', msg.timer_black );
+                socket.broadcast.emit('timer_b', counter_black );
                 counter_black--
                 if (counter_black === 0){
                 io.in(msg.gameId).emit('timer_b', '0' );
