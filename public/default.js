@@ -2,11 +2,11 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
     htmlseconds_black, htmlseconds_white, splitseconds_black, splitseconds_white,
     server_sent_w_time, server_sent_b_time, server_sent_now_playing;
     
-    var chesstimer = 60*30; // set the number of seconds here
+    var chesstimer = 60*5; // set the number of seconds here
     
     var fiveMinutes1 = chesstimer * 1;
     var fiveMinutes2 = chesstimer * 1;
-    var t = "30:00";
+    var t = "05:00";
     var initial_timer_for_white = chesstimer;
     var initial_interval_for_black = chesstimer*1000;
     var generic_interval = 1000;
@@ -32,6 +32,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
                         display.textContent = "00:00";
                         //stopTimerforPlayer1();
                         var modal = document.getElementById('myModal');
+                        $('#modalresult').html("Result: Black Wins.")
                         console.log(modal);
                         modal.style.display = "block";
                             stopTimerforPlayer1();
@@ -58,6 +59,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
                         display.textContent = "00:00";
                         //stopTimerforPlayer2();
                         var modal = document.getElementById('myModal');
+                        $('#modalresult').html("Result: White Wins.")
                         console.log(modal);
                         modal.style.display = "block";
                     stopTimerforPlayer1();
