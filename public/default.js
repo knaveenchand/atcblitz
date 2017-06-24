@@ -2,7 +2,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
     htmlseconds_black, htmlseconds_white, splitseconds_black, splitseconds_white,
     server_sent_w_time, server_sent_b_time, server_sent_now_playing;
     
-    var chesstimer = 60; // set the number of seconds here
+    var chesstimer = 60*30; // set the number of seconds here
     
     var fiveMinutes1 = chesstimer * 1;
     var fiveMinutes2 = chesstimer * 1;
