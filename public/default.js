@@ -1,11 +1,13 @@
 var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
+    htmlseconds_black, htmlseconds_white, splitseconds_black, splitseconds_white,
     fiveMinutes1 = 60 * 1,
     fiveMinutes2 = 60 * 1,
         display1 = document.querySelector('#player1timer'),
         display2 = document.querySelector('#player2timer');
     var setIntervalPlayer1, setIntervalPlayer2;
 
-        function startTimerforPlayer1(duration, display) {
+/*     
+function startTimerforPlayer1(duration, display) {
             var timer = duration, minutes, seconds;
             setIntervalPlayer1 = setInterval(function () {
                 minutes = parseInt(timer / 60, 10)
@@ -61,6 +63,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
             clearInterval(setIntervalPlayer2);
         } 
 
+*/
 
 (function () {
     
@@ -122,6 +125,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
                    game.move(msg.move);
                    board.position(game.fen());
                     
+                    /*
                     if (game.game_over() === true){
                         stopTimerforPlayer1();
                         stopTimerforPlayer2();
@@ -161,9 +165,33 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
 
                             }
                     }
+                    
+                    */
                 }
   
       });
+        
+    socket.on('timer_w', function(count){
+          
+                minutes = parseInt(count / 60, 10)
+                seconds = parseInt(count % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+          
+        $('#player1timer').append($('<li>').text(minutes + ":" + seconds));
+      });
+        
+    socket.on('timer_b', function(count){
+          
+                minutes = parseInt(count / 60, 10)
+                seconds = parseInt(count % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+          
+        $('#player2timer').append($('<li>').text(minutes + ":" + seconds));
+      });        
      
       
       socket.on('logout', function (msg) {
@@ -293,8 +321,18 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
           return 'snapback';
         } else {       
            
+                                htmlseconds_white = document.getElementById("player1timer").innerHTML;
+                                splitseconds_white = htmlseconds_white.split(':');                
+                                //minutes are worth 60 seconds. 
+                                fiveMinutes_white = ((+splitseconds_white[0])*60) + (+splitseconds_white[1]);
             
-           socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen(), playeremitted: username });
+                                htmlseconds_black = document.getElementById("player1timer").innerHTML;
+                                splitseconds_black = htmlseconds_black.split(':');                
+                                //minutes are worth 60 seconds. 
+                                fiveMinutes_black = ((+splitseconds_black[0])*60) + (+splitseconds_black[1]);
+
+            
+           socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen(), playeremitted: username, timer_white: fiveMinutes_white, timer_black: fiveMinutes_black, now_playing: game.turn });
             
 
 

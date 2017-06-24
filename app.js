@@ -10,6 +10,8 @@ var lobbyUsers = {};
 var users = {};
 var activeGames = {};
 
+var counter_white, counter_black, servertimer_white, servertimer_black;
+
 app.get('/', function(req, res) {
  res.sendFile(__dirname + '/public/default.html');
 
@@ -99,6 +101,36 @@ io.on('connection', function(socket) {
     
     socket.on('move', function(msg) {
         socket.broadcast.emit('move', msg);
+        counter_white = msg.timer_white;
+        counter_black = msg.timer_black;
+        if (msg.now_playing === 'w'){
+            servertimer_white = setInterval(function(){
+                io.in(msg.gameId).emit('timer_w', msg.timer_white );
+                counter_white--
+                if (counter_white === 0){
+                io.in(msg.gameId).emit('timer_w', '0' );
+                clearInterval(servertimer_white);                
+                }            
+            }, 1000);
+            clearInterval(servertimer_black);
+            io.in(msg.gameId).emit('timer_b', msg.timer_black );         
+            
+        }
+        
+        if (msg.now_playing === 'b'){
+            servertimer_black = setInterval(function(){
+                io.in(msg.gameId).emit('timer_b', msg.timer_black );
+                counter_black--
+                if (counter_black === 0){
+                io.in(msg.gameId).emit('timer_b', '0' );
+                clearInterval(servertimer_black);                
+                }            
+            }, 1000);
+            clearInterval(servertimer_white);
+            io.in(msg.gameId).emit('timer_w', msg.timer_white );         
+            
+        }
+        
         activeGames[msg.gameId].board = msg.board;
         console.log(msg);
     });
