@@ -1,16 +1,25 @@
 var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
     htmlseconds_black, htmlseconds_white, splitseconds_black, splitseconds_white,
-    fiveMinutes1 = 60 * 1,
-    fiveMinutes2 = 60 * 1,
-        display1 = document.querySelector('#player1timer'),
-        display2 = document.querySelector('#player2timer');
+    server_sent_w_time, server_sent_b_time, server_sent_now_playing;
+    
+    var chesstimer = 60; // set the number of seconds here
+    
+    var fiveMinutes1 = chesstimer * 1;
+    var fiveMinutes2 = chesstimer * 1;
+    var t = "01:00";
+    var initial_timer_for_white = chesstimer;
+    var initial_interval_for_black = chesstimer*1000;
+    var generic_interval = 1000;
+    
+    var display1 = document.querySelector('#player1timer');
+    var display2 = document.querySelector('#player2timer');
     var setIntervalPlayer1, setIntervalPlayer2;
 
-/*     
-function startTimerforPlayer1(duration, display) {
+   
+    function startTimerforPlayer1(duration, display, intvl) {
             var timer = duration, minutes, seconds;
             setIntervalPlayer1 = setInterval(function () {
-                minutes = parseInt(timer / 60, 10)
+                minutes = parseInt(timer / 60, 10);
                 seconds = parseInt(timer % 60, 10);
 
                 minutes = minutes < 10 ? "0" + minutes : minutes;
@@ -20,6 +29,7 @@ function startTimerforPlayer1(duration, display) {
 
                 if (--timer <= 0) {
                     timer = 0;
+                        display.textContent = "00:00";
                         //stopTimerforPlayer1();
                         var modal = document.getElementById('myModal');
                         console.log(modal);
@@ -28,14 +38,14 @@ function startTimerforPlayer1(duration, display) {
                             stopTimerforPlayer2();
 
                 }
-            }, 1000);
+            }, intvl);
 
         }
 
-        function startTimerforPlayer2(duration, display) {
+    function startTimerforPlayer2(duration, display, intvl) {
             var timer = duration, minutes, seconds;
             setIntervalPlayer2 = setInterval(function () {
-                minutes = parseInt(timer / 60, 10)
+                minutes = parseInt(timer / 60, 10);
                 seconds = parseInt(timer % 60, 10);
 
                 minutes = minutes < 10 ? "0" + minutes : minutes;
@@ -45,6 +55,7 @@ function startTimerforPlayer1(duration, display) {
 
                 if (--timer <= 0) {
                     timer = 0;
+                        display.textContent = "00:00";
                         //stopTimerforPlayer2();
                         var modal = document.getElementById('myModal');
                         console.log(modal);
@@ -52,7 +63,7 @@ function startTimerforPlayer1(duration, display) {
                     stopTimerforPlayer1();
                     stopTimerforPlayer2();
                 }
-            }, 1000);
+            }, intvl);
 
         }
 
@@ -63,7 +74,6 @@ function startTimerforPlayer1(duration, display) {
             clearInterval(setIntervalPlayer2);
         } 
 
-*/
 
 (function () {
     
@@ -123,80 +133,22 @@ function startTimerforPlayer1(duration, display) {
                  
                 if (serverGame && msg.gameId === serverGame.id) {
                    game.move(msg.move);
-                   board.position(game.fen());
+                   board.position(game.fen()); 
                     
-                    /*
-                    if (game.game_over() === true){
-                        stopTimerforPlayer1();
-                        stopTimerforPlayer2();
-                    } 
-                    else {
-                                    //timer
-                            if (game.turn() === 'w') {
-
-                                htmlseconds1 = document.getElementById("player1timer").innerHTML;
-                                splitseconds1 = htmlseconds1.split(':');                
-                                //minutes are worth 60 seconds. 
-                                fiveMinutes1 = ((+splitseconds1[0])*60) + (+splitseconds1[1]);
-
-                                stopTimerforPlayer1();
-                                startTimerforPlayer1(fiveMinutes1, display1);
-
-                                //stop timer for opponent
-                                htmlseconds2 = document.getElementById("player2timer").innerHTML;
-                                stopTimerforPlayer2();
-                                document.getElementById("player2timer").innerHTML = htmlseconds2;
-
-
-                            }
-                             if (game.turn() === 'b') {
-                                htmlseconds2 = document.getElementById("player2timer").innerHTML;
-                                splitseconds2 = htmlseconds2.split(':');                
-                                //minutes are worth 60 seconds. 
-                                fiveMinutes2 = ((+splitseconds2[0])*60) + (+splitseconds2[1]);
-
-                                stopTimerforPlayer2();
-                                startTimerforPlayer2(fiveMinutes2, display2);
-
-                                //stop timer for opponent
-                                htmlseconds1 = document.getElementById("player1timer").innerHTML;
-                                stopTimerforPlayer1();
-                                document.getElementById("player1timer").innerHTML = htmlseconds1;
-
-                            }
-                    }
-                    
-                    */
-                }
+                server_sent_w_time = msg.timer_white;
+                server_sent_b_time = msg.timer_black;
+                server_sent_now_playing = msg.now_playing
+                console.log(server_sent_w_time,server_sent_b_time,server_sent_now_playing);
+                
+                stopTimerforPlayer1();
+                stopTimerforPlayer2();
+                if (game.turn() === 'w') startTimerforPlayer1(server_sent_w_time, display1, generic_interval);
+                if (game.turn() === 'b') startTimerforPlayer2(server_sent_b_time, display2, generic_interval);
+                 
+                } 
   
-      });
-        
-    socket.on('timer_w', function(count){
-          
-        var minutes, seconds;
-                minutes = parseInt(count / 60, 10)
-                seconds = parseInt(count % 60, 10);
-
-                minutes = minutes < 10 ? "0" + minutes : minutes;
-                seconds = seconds < 10 ? "0" + seconds : seconds;
-          
-        $('#player1timer').append($('<li>').text(minutes + ":" + seconds));
-      });
-        
-    socket.on('timer_b', function(count){
-        
-        var minutes, seconds;
-          
-                minutes = parseInt(count / 60, 10)
-                seconds = parseInt(count % 60, 10);
-
-                minutes = minutes < 10 ? "0" + minutes : minutes;
-                seconds = seconds < 10 ? "0" + seconds : seconds;
-          
-        $('#player2timer').append($('<li>').text(minutes + ":" + seconds));
-      });        
-     
-      
+      });   
+       
       socket.on('logout', function (msg) {
         removeUser(msg.username);
       });
@@ -289,9 +241,13 @@ function startTimerforPlayer1(duration, display) {
                
           game = serverGame.board ? new Chess(serverGame.board) : new Chess();
           board = new ChessBoard('game-board', cfg);
-            var t = "01:00";
-            document.getElementById("player1timer").innerHTML = t;
-            document.getElementById("player2timer").innerHTML = t;
+
+            //document.getElementById("player1timer").innerHTML = t;
+          
+          startTimerforPlayer1(chesstimer, display1, generic_interval); // white initial timer as the game starts
+          //startTimerforPlayer2(chesstimer, display2, initial_interval_for_black); // white initial timer as the game starts
+
+          document.getElementById("player2timer").innerHTML = t; // black initial timer as game starts
         
 
 
@@ -323,20 +279,33 @@ function startTimerforPlayer1(duration, display) {
         if (move === null) { 
           return 'snapback';
         } else {       
+            
+            var imov = 1;
            
                                 htmlseconds_white = document.getElementById("player1timer").innerHTML;
+                                htmlseconds_black = document.getElementById("player2timer").innerHTML;
+
+                                if (imov > 0) {
+                                    stopTimerforPlayer2();
+                                }
+                                                imov++;
+
+                                stopTimerforPlayer1();
+            
                                 splitseconds_white = htmlseconds_white.split(':');                
                                 //minutes are worth 60 seconds. 
                                 fiveMinutes_white = ((+splitseconds_white[0])*60) + (+splitseconds_white[1]);
             
-                                htmlseconds_black = document.getElementById("player1timer").innerHTML;
                                 splitseconds_black = htmlseconds_black.split(':');                
                                 //minutes are worth 60 seconds. 
                                 fiveMinutes_black = ((+splitseconds_black[0])*60) + (+splitseconds_black[1]);
 
             
            socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen(), playeremitted: username, timer_white: fiveMinutes_white, timer_black: fiveMinutes_black, now_playing: game.turn });
+                        
             
+            if (game.turn() === 'w') startTimerforPlayer1(fiveMinutes_white, display1, generic_interval);
+            if (game.turn() === 'b') startTimerforPlayer2(fiveMinutes_black, display2, generic_interval);
 
 
             
