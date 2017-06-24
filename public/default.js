@@ -142,8 +142,12 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
                 
                 stopTimerforPlayer1();
                 stopTimerforPlayer2();
-                if (game.turn() === 'w') startTimerforPlayer1(server_sent_w_time, display1, generic_interval);
-                if (game.turn() === 'b') startTimerforPlayer2(server_sent_b_time, display2, generic_interval);
+                if (server_sent_now_playing === 'w') {
+                    startTimerforPlayer1(server_sent_w_time, display1, generic_interval);
+                }
+                if (server_sent_now_playing === 'b') {
+                    startTimerforPlayer2(server_sent_b_time, display2, generic_interval);
+                }
                  
                 } 
   
@@ -301,7 +305,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
                                 fiveMinutes_black = ((+splitseconds_black[0])*60) + (+splitseconds_black[1]);
 
             
-           socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen(), playeremitted: username, timer_white: fiveMinutes_white, timer_black: fiveMinutes_black, now_playing: game.turn });
+           socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen(), playeremitted: username, timer_white: fiveMinutes_white, timer_black: fiveMinutes_black, now_playing: game.turn() });
                         
             
             if (game.turn() === 'w') startTimerforPlayer1(fiveMinutes_white, display1, generic_interval);
