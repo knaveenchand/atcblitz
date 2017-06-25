@@ -1,7 +1,11 @@
 var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
     htmlseconds_black, htmlseconds_white, splitseconds_black, splitseconds_white,
     server_sent_w_time, server_sent_b_time, server_sent_now_playing;
-    
+
+    var statusEl = $('#status');
+    var toggleSound = document.getElementById("myaudio"); 
+
+
     var chesstimer = 60*5; // set the number of seconds here
     
     var fiveMinutes1 = chesstimer * 1;
@@ -18,6 +22,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
    
     function startTimerforPlayer1(duration, display, intvl) {
             var timer = duration, minutes, seconds;
+            toggleSound.play();
             setIntervalPlayer1 = setInterval(function () {
                 minutes = parseInt(timer / 60, 10);
                 seconds = parseInt(timer % 60, 10);
@@ -32,7 +37,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
                         display.textContent = "00:00";
                         //stopTimerforPlayer1();
                         var modal = document.getElementById('myModal');
-                        $('#modalresult').html("Result: Black Wins.")
+                        $('#modalresult').html("Result: <strong>Black Wins</strong>. White flag down.")
                         console.log(modal);
                         modal.style.display = "block";
                             stopTimerforPlayer1();
@@ -45,6 +50,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
 
     function startTimerforPlayer2(duration, display, intvl) {
             var timer = duration, minutes, seconds;
+            toggleSound.play();
             setIntervalPlayer2 = setInterval(function () {
                 minutes = parseInt(timer / 60, 10);
                 seconds = parseInt(timer % 60, 10);
@@ -59,7 +65,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
                         display.textContent = "00:00";
                         //stopTimerforPlayer2();
                         var modal = document.getElementById('myModal');
-                        $('#modalresult').html("Result: White Wins.")
+                        $('#modalresult').html("Result: <strong>White Wins</strong>. Black flag down.")
                         console.log(modal);
                         modal.style.display = "block";
                     stopTimerforPlayer1();
@@ -139,17 +145,24 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
                     
                 server_sent_w_time = msg.timer_white;
                 server_sent_b_time = msg.timer_black;
-                server_sent_now_playing = msg.now_playing
+                server_sent_now_playing = msg.now_playing;
+                server_sent_gameover = msg.gameover;
                 console.log(server_sent_w_time,server_sent_b_time,server_sent_now_playing);
+                    
+                updateStatus();
                 
                 stopTimerforPlayer1();
                 stopTimerforPlayer2();
-                if (server_sent_now_playing === 'w') {
-                    startTimerforPlayer1(server_sent_w_time, display1, generic_interval);
+                
+                if (server_sent_gameover === false) {
+                           if (server_sent_now_playing === 'w') {
+                            startTimerforPlayer1(server_sent_w_time, display1, generic_interval);
+                        }
+                        if (server_sent_now_playing === 'b') {
+                            startTimerforPlayer2(server_sent_b_time, display2, generic_interval);
+                        }                 
                 }
-                if (server_sent_now_playing === 'b') {
-                    startTimerforPlayer2(server_sent_b_time, display2, generic_interval);
-                }
+
                  
                 } 
   
@@ -244,9 +257,13 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
             onDrop: onDrop,
             onSnapEnd: onSnapEnd
           };
+          
                
           game = serverGame.board ? new Chess(serverGame.board) : new Chess();
           board = new ChessBoard('game-board', cfg);
+          
+            updateStatus();
+
 
             //document.getElementById("player1timer").innerHTML = t;
           
@@ -287,6 +304,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
         } else {       
             
             var imov = 1;
+            
            
                                 htmlseconds_white = document.getElementById("player1timer").innerHTML;
                                 htmlseconds_black = document.getElementById("player2timer").innerHTML;
@@ -306,16 +324,35 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
                                 //minutes are worth 60 seconds. 
                                 fiveMinutes_black = ((+splitseconds_black[0])*60) + (+splitseconds_black[1]);
 
+          
+               if (game.game_over() === true) {
+                
+                stopTimerforPlayer1();
+                stopTimerforPlayer2();
+
+                document.getElementById("player1timer").innerHTML = htmlseconds_white;
+                document.getElementById("player2timer").innerHTML = htmlseconds_black;
+                   
+                socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen(), playeremitted: username, timer_white: fiveMinutes_white, timer_black: fiveMinutes_black, now_playing: game.turn(), gameover: game.game_over() });
+                   
+            }
             
-           socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen(), playeremitted: username, timer_white: fiveMinutes_white, timer_black: fiveMinutes_black, now_playing: game.turn() });
+            else {
+                
+                socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen(), playeremitted: username, timer_white: fiveMinutes_white, timer_black: fiveMinutes_black, now_playing: game.turn(), gameover: game.game_over() });
                         
             
-            if (game.turn() === 'w') startTimerforPlayer1(fiveMinutes_white, display1, generic_interval);
-            if (game.turn() === 'b') startTimerforPlayer2(fiveMinutes_black, display2, generic_interval);
+                if (game.turn() === 'w') startTimerforPlayer1(fiveMinutes_white, display1, generic_interval);
+                if (game.turn() === 'b') startTimerforPlayer2(fiveMinutes_black, display2, generic_interval);
+                
+            }
+            
 
 
             
         }
+            updateStatus();
+
       
       };
       
@@ -324,6 +361,42 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
       var onSnapEnd = function() {
         board.position(game.fen());
       };
+        
+        // status messages
+        var updateStatus = function() {
+                  var status = '';
+
+                  var moveColor = 'White';
+                  if (game.turn() === 'b') {
+                    moveColor = 'Black';
+                  }
+
+                  // checkmate?
+                  if (game.in_checkmate() === true) {
+                    status = 'Game over, ' + moveColor + ' is in checkmate.';
+                  }
+
+                  // draw?
+                  else if (game.in_draw() === true) {
+                    status = 'Game over, drawn position';
+                  }
+
+                  // game still on
+                  else {
+                    status = moveColor + ' to move';
+
+                    // check?
+                    if (game.in_check() === true) {
+                      status += ', ' + moveColor + ' is in check';
+                    }
+                  }
+        statusEl.html(status);
+
+        };
+
+        updateStatus();
+        
+        
     });
 })();
 

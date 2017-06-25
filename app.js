@@ -142,7 +142,7 @@ io.on('connection', function(socket) {
         serverknown_gameid = msg.gameId;
 
         socket.broadcast.emit('move', msg);
-        socket.broadcast.emit('stimer', {s_timer_black: counter_black, s_timer_white: counter_white, s_now_playing: server_now_playing  } );
+        //socket.broadcast.emit('stimer', {s_timer_black: counter_black, s_timer_white: counter_white, s_now_playing: server_now_playing  } );
 
         
         activeGames[msg.gameId].board = msg.board;
