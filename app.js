@@ -9,8 +9,15 @@ var port = process.env.PORT || 3000;
 var lobbyUsers = {};
 var users = {};
 var activeGames = {};
+var i_serverTimerSocketId;
 
-var counter_white, counter_black, servertimer_white, servertimer_black, server_now_playing, serverknown_gameid;
+
+var counter_white, counter_black, servertimer_white, servertimer_black, server_now_playing, serverknown_gameid, w_setInterval, b_setInterval;
+
+        var wtimerid;
+        var btimerid;
+        
+        var myIntervals;
 
 /*
 function server_timer(counter_w, counter_b, ser_now_playing){
@@ -84,6 +91,7 @@ io.on('connection', function(socket) {
     
     socket.on('invite', function(opponentId) {
         console.log('got an invite from: ' + socket.userId + ' --> ' + opponentId);
+        socket.emit('theplayers',{whiteplayerid : socket.userId, blackplayerid : opponentId});
         
         socket.broadcast.emit('leavelobby', socket.userId);
         socket.broadcast.emit('leavelobby', opponentId);
@@ -142,16 +150,85 @@ io.on('connection', function(socket) {
         serverknown_gameid = msg.gameId;
 
         socket.broadcast.emit('move', msg);
-        //socket.broadcast.emit('stimer', {s_timer_black: counter_black, s_timer_white: counter_white, s_now_playing: server_now_playing  } );
-
         
         activeGames[msg.gameId].board = msg.board;
-        console.log(msg);
+        //console.log(msg);
         
     });
 
+    socket.on('newEmitId', function(emitIDagain){
+        io.emit('newEmitId', emitIDagain);
+        
+    })
     
-    
+/*White ka Clocks*/       
+    socket.on('serverTimerEmitterId_w', function(eid_w){
+             console.log('listening to serverTimerEmitterId_w socket: ', eid_w);
+        
+    var client_white_timer = eid_w.timer_white;
+    var client_black_timer = eid_w.timer_black;
+    var client_sent_now_playing = eid_w.now_playing;
+    var client_sent_gamestart = eid_w.gamestart;
+    var serverTimerEmitterId = eid_w.emitterid;
+
+         if (client_sent_now_playing === 'w' || client_sent_gamestart == 1) {
+            w_setInterval_w = setInterval(function() {
+                    client_white_timer--;
+                    if (client_white_timer <= 0) {
+                        client_white_timer = 0;
+                    }
+                    io.emit(serverTimerEmitterId,{serverTimerEmitterId: serverTimerEmitterId, countdown_white: client_white_timer, countdown_black: client_black_timer});
+            }, 1000);            
+        }
+
+
+        if (client_sent_now_playing === 'b') {
+            b_setInterval_w = setInterval(function() {
+                    client_black_timer--;
+                    if (client_black_timer <= 0) {
+                        client_black_timer = 0;
+                    }
+                    io.emit(serverTimerEmitterId,{serverTimerEmitterId: serverTimerEmitterId, countdown_white: client_white_timer, countdown_black: client_black_timer});
+            }, 1000);            
+        } 
+
+    });  
+
+/*Black Ka Clocks*/
+    socket.on('serverTimerEmitterId_b', function(eid_b){
+             console.log('listening to serverTimerEmitterId_b socket: ', eid_b);
+        
+    var client_white_timer = eid_b.timer_white;
+    var client_black_timer = eid_b.timer_black;
+    var client_sent_now_playing = eid_b.now_playing;
+    var client_sent_gamestart = eid_b.gamestart;
+    var serverTimerEmitterId = eid_b.emitterid;
+
+         if (client_sent_now_playing === 'w' || client_sent_gamestart == 1) {
+            w_setInterval_b = setInterval(function() {
+                    client_white_timer--;
+                    if (client_white_timer <= 0) {
+                        client_white_timer = 0;
+                    }
+                    io.emit(serverTimerEmitterId,{serverTimerEmitterId: serverTimerEmitterId, countdown_white: client_white_timer, countdown_black: client_black_timer});
+            }, 1000);            
+        }
+
+
+        if (client_sent_now_playing === 'b') {
+            b_setInterval_b = setInterval(function() {
+                    client_black_timer--;
+                        if (client_black_timer <= 0) {
+                        client_black_timer = 0;
+                    }
+            
+                    io.emit(serverTimerEmitterId,{serverTimerEmitterId: serverTimerEmitterId, countdown_white: client_white_timer, countdown_black: client_black_timer});
+            }, 1000);            
+        } 
+
+    });  
+
+
 
     
     socket.on('resign', function(msg) {

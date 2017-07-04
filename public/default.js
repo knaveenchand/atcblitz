@@ -5,12 +5,24 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
     var statusEl = $('#status');
     var toggleSound = document.getElementById("myaudio"); 
 
+    var gamejuststarted;
 
-    var chesstimer = 60*5; // set the number of seconds here
+    var whiteplayerid;
+    var blackplayerid;
+    
+    var init_emitterid_w;
+    var init_emitterid_b;
+
+    var emitterid_w;
+    var emitterid_b;
+
+    var emitRecieverid;
+    var newlyRecdEmitterId;
+    var chesstimer = 60*1; // set the number of seconds here
     
     var fiveMinutes1 = chesstimer * 1;
     var fiveMinutes2 = chesstimer * 1;
-    var t = "05:00";
+    var t = "01:00";
     var initial_timer_for_white = chesstimer;
     var initial_interval_for_black = chesstimer*1000;
     var generic_interval = 1000;
@@ -18,8 +30,13 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
     var display1 = document.querySelector('#player1timer');
     var display2 = document.querySelector('#player2timer');
     var setIntervalPlayer1, setIntervalPlayer2;
+    
+    var boardEl = $('#game-board');
+    var squareClass = 'square-55d63';
+    var squareToHighlight, colorToHighlight;
 
-   
+
+   /*
     function startTimerforPlayer1(duration, display, intvl) {
             var timer = duration, minutes, seconds;
             toggleSound.play();
@@ -82,6 +99,29 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
             clearInterval(setIntervalPlayer2);
         } 
 
+*/
+
+function sec_to_time(t) {
+                
+                if (t == 0) {
+                    t=0
+                }
+                var minutes = parseInt(t / 60, 10);
+                var seconds = parseInt(t % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                 return (minutes + ":" + seconds);
+}
+
+function splitseconds(timerdiv) {
+
+    var htmlseconds = document.getElementById(timerdiv).innerHTML;
+    var splitter = htmlseconds.split(':');
+    var secs = ((+splitter[0])*60) + (+splitter[1]);
+    return (secs);
+} 
 
 (function () {
     
@@ -136,9 +176,11 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
         $('#page-game').show();
         
       });
+    
+
         
       socket.on('move', function (msg) {
-                 
+   
                 if (serverGame && msg.gameId === serverGame.id) {
                    game.move(msg.move);
                    board.position(game.fen()); 
@@ -147,27 +189,30 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
                 server_sent_b_time = msg.timer_black;
                 server_sent_now_playing = msg.now_playing;
                 server_sent_gameover = msg.gameover;
-                console.log(server_sent_w_time,server_sent_b_time,server_sent_now_playing);
-                    
-                updateStatus();
-                
-                stopTimerforPlayer1();
-                stopTimerforPlayer2();
-                
-                if (server_sent_gameover === false) {
-                           if (server_sent_now_playing === 'w') {
-                            startTimerforPlayer1(server_sent_w_time, display1, generic_interval);
-                        }
-                        if (server_sent_now_playing === 'b') {
-                            startTimerforPlayer2(server_sent_b_time, display2, generic_interval);
-                        }                 
-                }
 
+        //move highlighting    
+          if (msg.now_playing === 'b') {
+            boardEl.find('.' + squareClass).removeClass('highlight-white');
+            boardEl.find('.square-' + msg.move.from).addClass('highlight-white');
+            squareToHighlight = msg.move.to;
+            colorToHighlight = 'white';
+          }
+          else {
+            boardEl.find('.square-55d63').removeClass('highlight-black');
+            boardEl.find('.square-' + msg.move.from).addClass('highlight-black');
+            squareToHighlight = msg.move.to;
+            colorToHighlight = 'black';    
+          }
+    
+                     updateStatus();    
                  
                 } 
   
-      });   
-       
+      });  
+
+
+ 
+        
       socket.on('logout', function (msg) {
         removeUser(msg.username);
       });
@@ -239,7 +284,13 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
                           socket.emit('invite',  user);
                         }));
         });
+    socket.on('theplayers', function(plrs) {
+        whiteplayerid = plrs.whiteplayerid;
+        blackplayerid = plrs.blackplayerid;
+    });
       };
+        
+    
            
       //////////////////////////////
       // Chess Game
@@ -255,29 +306,169 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
             position: serverGame.board ? serverGame.board : 'start',
             onDragStart: onDragStart,
             onDrop: onDrop,
-            onSnapEnd: onSnapEnd
+            onSnapEnd: onSnapEnd,
+            onChange: onChange,
+            onMoveEnd: onMoveEnd
           };
           
                
           game = serverGame.board ? new Chess(serverGame.board) : new Chess();
           board = new ChessBoard('game-board', cfg);
           
-            updateStatus();
 
-
-            //document.getElementById("player1timer").innerHTML = t;
+            document.getElementById("new-w-timer").innerHTML = t;
+            document.getElementById("new-b-timer").innerHTML = t;
+            
+            gamejuststarted = 1; //yes it jsut started
+                    
+            var whiteseconds_init = splitseconds("new-w-timer");
+            var blackseconds_init = splitseconds("new-b-timer");
+              
+            //socket.emit('clear-timers', {clrw: serverGame.id+1, clrb: serverGame.id+2});
+              
+            init_emitterid_w = "atc-w"+serverGame.id+whiteseconds_init; 
+            init_emitterid_b = "atc-b"+serverGame.id+whiteseconds_init; 
+            
           
-          startTimerforPlayer1(chesstimer, display1, generic_interval); // white initial timer as the game starts
-          //startTimerforPlayer2(chesstimer, display2, initial_interval_for_black); // white initial timer as the game starts
+        if (username == whiteplayerid) {
+                
+            socket.emit('serverTimerEmitterId_w', {emitterid: init_emitterid_w, gameId: serverGame.id, playeremitted: username, timer_white: whiteseconds_init, timer_black: blackseconds_init, now_playing: game.turn(), gameover: game.game_over(), gamestart: gamejuststarted });
+            
+            socket.on(init_emitterid_w, function(chkEmitId){
+                if(chkEmitId.serverTimerEmitterId == init_emitterid_w) {
+                    $('#new-w-timer').html(sec_to_time(chkEmitId.countdown_white));
+                    $('#new-b-timer').html(sec_to_time(chkEmitId.countdown_black));                
+                }
+            if(splitseconds("new-w-timer") <= 0){
+                socket.removeAllListeners(init_emitterid_w);
+                var modal = document.getElementById('myModal');
+                $('#modalresult').html("Result: <strong>Black Wins</strong>. White flag down.")
+                modal.style.display = "block";               
 
-          document.getElementById("player2timer").innerHTML = t; // black initial timer as game starts
-        
+            }
+            });
 
+          }
+          
+        if (username !== whiteplayerid) {
+            socket.emit('serverTimerEmitterId_b', {emitterid: init_emitterid_b, gameId: serverGame.id, playeremitted: username, timer_white: whiteseconds_init, timer_black: blackseconds_init, now_playing: game.turn(), gameover: game.game_over(), gamestart: gamejuststarted });
+            
+            socket.on(init_emitterid_b, function(chkEmitId){
+                if(chkEmitId.serverTimerEmitterId == init_emitterid_b) {
+                    $('#new-w-timer').html(sec_to_time(chkEmitId.countdown_white));
+                    $('#new-b-timer').html(sec_to_time(chkEmitId.countdown_black));               
+                }
+            if(splitseconds("new-w-timer") <= 0){
+                socket.removeAllListeners(init_emitterid_w);
+                        var modal = document.getElementById('myModal');
+                        $('#modalresult').html("Result: <strong>Black Wins</strong>. White flag down.")
+                        modal.style.display = "block";               
+
+                    }            
+
+            }); 
+        }
+
+          updateStatus();
 
       }
- 
-     
-      
+
+    var onChange = function(oldPos, newPos) {
+        
+        if (username == whiteplayerid){
+            //white player stuff
+            // remove init listeners related to white player
+            socket.removeAllListeners(init_emitterid_w);
+            socket.removeAllListeners(emitterid_w);
+            //console.log("emitterid_b at onchange: ",emitterid_w);
+            
+            var whiteseconds_w = splitseconds("new-w-timer");
+            var blackseconds_w = splitseconds("new-b-timer");
+            
+            if (game.turn() == 'w') {
+            emitterid_w = "atc-w"+serverGame.id+blackseconds_w+1;                
+            }
+            
+            if ((game.turn() == 'b') || (gamejuststarted == 1)) {
+            emitterid_w = "atc-w"+serverGame.id+whiteseconds_w+1;                
+                
+            }
+             console.log("just before emit: ", emitterid_w);                    
+
+            socket.emit('serverTimerEmitterId_w', {emitterid: emitterid_w, gameId: serverGame.id, playeremitted: username, timer_white: whiteseconds_w, timer_black: blackseconds_w, now_playing: game.turn(), gameover: game.game_over(), gamestart: 0 });
+            
+            socket.on(emitterid_w, function(chkEmitId){
+                if(chkEmitId.serverTimerEmitterId == emitterid_w) {
+                    $('#new-w-timer').html(sec_to_time(chkEmitId.countdown_white));
+                    $('#new-b-timer').html(sec_to_time(chkEmitId.countdown_black));                
+                }
+            if(splitseconds("new-w-timer") <= 0){
+                socket.removeAllListeners(emitterid_w);
+                var modal = document.getElementById('myModal');
+                $('#modalresult').html("Result: <strong>Black Wins</strong>. White flag down.")
+                modal.style.display = "block";               
+
+            }
+            if(splitseconds("new-b-timer") <= 0){
+                socket.removeAllListeners(emitterid_w);
+                var modal = document.getElementById('myModal');
+                $('#modalresult').html("Result: <strong>White Wins</strong>. Black flag down.")
+                modal.style.display = "block";               
+
+            }
+            }); 
+
+            
+        }
+        
+        if (username !== whiteplayerid){
+            // black player stuff
+            // remove init listeners related to black player
+            socket.removeAllListeners(init_emitterid_b);
+            socket.removeAllListeners(emitterid_b);
+            //console.log("emitterid_b at onchange: ",emitterid_b);
+            
+            var whiteseconds_b = splitseconds("new-w-timer");
+            var blackseconds_b = splitseconds("new-b-timer");
+
+             if (game.turn() == 'w') {
+            emitterid_b= "atc-b"+serverGame.id+blackseconds_b+1; 
+            }
+            
+            if (game.turn() == 'b') {
+            emitterid_b= "atc-b"+serverGame.id+whiteseconds_b+1; 
+                
+            }
+            
+            console.log("just before emit: ", emitterid_b);    
+            socket.emit('serverTimerEmitterId_b', {emitterid: emitterid_b, gameId: serverGame.id, playeremitted: username, timer_white: whiteseconds_b, timer_black: blackseconds_b, now_playing: game.turn(), gameover: game.game_over(), gamestart: 0 });
+
+            socket.on(emitterid_b, function(chkEmitId){
+                if(chkEmitId.serverTimerEmitterId == emitterid_b) {
+                    $('#new-w-timer').html(sec_to_time(chkEmitId.countdown_white));
+                    $('#new-b-timer').html(sec_to_time(chkEmitId.countdown_black));                
+                }
+            if(splitseconds("new-w-timer") <= 0){
+                socket.removeAllListeners(emitterid_b);
+                var modal = document.getElementById('myModal');
+                $('#modalresult').html("Result: <strong>Black Wins</strong>. White flag down.")
+                modal.style.display = "block";               
+
+            }
+            if(splitseconds("new-b-timer") <= 0){
+                socket.removeAllListeners(emitterid_b);
+                var modal = document.getElementById('myModal');
+                $('#modalresult').html("Result: <strong>White Wins</strong>. Black flag down.")
+                modal.style.display = "block";               
+
+            }
+            }); 
+
+        }
+          
+
+}
+                
       // do not pick up pieces if the game is over
       // only pick up pieces for the side to move
       var onDragStart = function(source, piece, position, orientation) {
@@ -289,6 +480,7 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
         }
       };  
       
+        
       
       var onDrop = function(source, target) {
         // see if the move is legal
@@ -303,55 +495,34 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
           return 'snapback';
         } else {       
             
-            var imov = 1;
+            gamejuststarted = 0;
             
-           
-                                htmlseconds_white = document.getElementById("player1timer").innerHTML;
-                                htmlseconds_black = document.getElementById("player2timer").innerHTML;
-
-                                if (imov > 0) {
-                                    stopTimerforPlayer2();
-                                }
-                                                imov++;
-
-                                stopTimerforPlayer1();
+            var e_whiteseconds = splitseconds("new-w-timer");
+            var e_blackseconds = splitseconds("new-b-timer");
+            //console.log(username,whiteplayerid);
             
-                                splitseconds_white = htmlseconds_white.split(':');                
-                                //minutes are worth 60 seconds. 
-                                fiveMinutes_white = ((+splitseconds_white[0])*60) + (+splitseconds_white[1]);
-            
-                                splitseconds_black = htmlseconds_black.split(':');                
-                                //minutes are worth 60 seconds. 
-                                fiveMinutes_black = ((+splitseconds_black[0])*60) + (+splitseconds_black[1]);
+            /*
+            if (username == whiteplayerid) {
+                    if (game.turn() == 'b') {
 
-          
-               if (game.game_over() === true) {
-                
-                stopTimerforPlayer1();
-                stopTimerforPlayer2();
+                        socket.emit('client-timer', {gameId: serverGame.id, playeremitted: username, timer_white: whiteseconds, timer_black: blackseconds, now_playing: 'b', gameover: game.game_over(), gamestart: 0 });
+                    }
 
-                document.getElementById("player1timer").innerHTML = htmlseconds_white;
-                document.getElementById("player2timer").innerHTML = htmlseconds_black;
-                   
-                socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen(), playeremitted: username, timer_white: fiveMinutes_white, timer_black: fiveMinutes_black, now_playing: game.turn(), gameover: game.game_over() });
-                   
+                    else {
+                        socket.emit('client-timer', {gameId: serverGame.id, playeremitted: username, timer_white: whiteseconds, timer_black: blackseconds, now_playing: 'w', gameover: game.game_over(), gamestart: 0 });
+
+                    }
             }
-            
-            else {
-                
-                socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen(), playeremitted: username, timer_white: fiveMinutes_white, timer_black: fiveMinutes_black, now_playing: game.turn(), gameover: game.game_over() });
+            */
+
+            socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen(), playeremitted: username, timer_white: e_whiteseconds, timer_black: e_blackseconds, now_playing: game.turn(), gameover: game.game_over() });
+
                         
+            updateStatus();
             
-                if (game.turn() === 'w') startTimerforPlayer1(fiveMinutes_white, display1, generic_interval);
-                if (game.turn() === 'b') startTimerforPlayer2(fiveMinutes_black, display2, generic_interval);
-                
-            }
-            
-
-
             
         }
-            updateStatus();
+          
 
       
       };
@@ -367,8 +538,14 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
                   var status = '';
 
                   var moveColor = 'White';
+                    $('#player2').removeClass('activetimer');
+                    $('#player1').addClass('activetimer');
+
                   if (game.turn() === 'b') {
                     moveColor = 'Black';
+                    $('#player1').removeClass('activetimer');
+                    $('#player2').addClass('activetimer');
+
                   }
 
                   // checkmate?
@@ -390,12 +567,21 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
                       status += ', ' + moveColor + ' is in check';
                     }
                   }
-        statusEl.html(status);
-
+            
+            statusEl.html(status);        
+             toggleSound.play();
+       
+        };
+        
+        //for move highlighting 
+        var onMoveEnd = function() {
+          boardEl.find('.square-' + squareToHighlight)
+            .addClass('highlight-' + colorToHighlight);
         };
 
-        updateStatus();
-        
+
+ 
+
         
     });
 })();
