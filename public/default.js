@@ -16,11 +16,11 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
     var emitterid_w;
     var emitterid_b;
 
-    var chesstimer = 60*1; // set the number of seconds here
+    var chesstimer = 3600; // set the number of seconds here. 3600 = 1 hr
     
     var fiveMinutes1 = chesstimer * 1;
     var fiveMinutes2 = chesstimer * 1;
-    var t = "01:00";
+    var t = "60:00";
     var increment = 30; //input seconds here
     
     var display1 = document.querySelector('#player1timer');
