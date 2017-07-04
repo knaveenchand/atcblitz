@@ -16,16 +16,12 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
     var emitterid_w;
     var emitterid_b;
 
-    var emitRecieverid;
-    var newlyRecdEmitterId;
     var chesstimer = 60*1; // set the number of seconds here
     
     var fiveMinutes1 = chesstimer * 1;
     var fiveMinutes2 = chesstimer * 1;
     var t = "01:00";
-    var initial_timer_for_white = chesstimer;
-    var initial_interval_for_black = chesstimer*1000;
-    var generic_interval = 1000;
+    var increment = 30; //input seconds here
     
     var display1 = document.querySelector('#player1timer');
     var display2 = document.querySelector('#player2timer');
@@ -386,11 +382,13 @@ function splitseconds(timerdiv) {
             var blackseconds_w = splitseconds("new-b-timer");
             
             if (game.turn() == 'w') {
-            emitterid_w = "atc-w"+serverGame.id+blackseconds_w+1;                
+            emitterid_w = "atc-w"+serverGame.id+blackseconds_w+1;
+                blackseconds_w = blackseconds_w + increment; // increment on white board for black move
             }
             
             if ((game.turn() == 'b') || (gamejuststarted == 1)) {
-            emitterid_w = "atc-w"+serverGame.id+whiteseconds_w+1;                
+            emitterid_w = "atc-w"+serverGame.id+whiteseconds_w+1;
+                whiteseconds_w = whiteseconds_w + 30; // increment on white board for white move
                 
             }
              console.log("just before emit: ", emitterid_w);                    
@@ -433,10 +431,13 @@ function splitseconds(timerdiv) {
 
              if (game.turn() == 'w') {
             emitterid_b= "atc-b"+serverGame.id+blackseconds_b+1; 
+            blackseconds_b = blackseconds_b + increment; // increment on black board for black
             }
             
             if (game.turn() == 'b') {
             emitterid_b= "atc-b"+serverGame.id+whiteseconds_b+1; 
+            whiteseconds_b = whiteseconds_b + increment; // increment on black board for white
+
                 
             }
             
