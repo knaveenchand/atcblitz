@@ -3,7 +3,9 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
     server_sent_w_time, server_sent_b_time, server_sent_now_playing;
 
     var statusEl = $('#status');
-    var toggleSound = document.getElementById("myaudio"); 
+    var pgnEl = $('#pgn');
+
+var toggleSound = document.getElementById("myaudio"); 
 
     var gamejuststarted;
 
@@ -30,6 +32,38 @@ var htmlseconds1, htmlseconds2, splitseconds1, splitseconds2,
     var boardEl = $('#game-board');
     var squareClass = 'square-55d63';
     var squareToHighlight, colorToHighlight;
+
+    var modal = document.getElementById('myModal');
+
+    var drawposition;
+    var drawboard;
+
+//function for parsing url to fetch get parameters
+function parseURLParams(url) {
+    var queryStart = url.indexOf("?") + 1,
+        queryEnd   = url.indexOf("#") + 1 || url.length + 1,
+        query = url.slice(queryStart, queryEnd - 1),
+        pairs = query.replace(/\+/g, " ").split("&"),
+        parms = {}, i, n, v, nv;
+
+    if (query === url || query === "") return;
+
+    for (i = 0; i < pairs.length; i++) {
+        nv = pairs[i].split("=", 2);
+        n = decodeURIComponent(nv[0]);
+        v = decodeURIComponent(nv[1]);
+
+        if (!parms.hasOwnProperty(n)) parms[n] = [];
+        parms[n].push(nv.length === 2 ? v : null);
+    }
+    return parms;
+}
+
+var urlString = document.location.href;
+var urlParams = parseURLParams(urlString);
+
+//var playerUniqueCode = urlParams["name"][0];
+
 
 
    /*
@@ -133,6 +167,9 @@ function splitseconds(timerdiv) {
       //////////////////////////////
       // Socket.io handlers
       ////////////////////////////// 
+    
+    //socket.emit('playerUniqueID', {playeruniqueid : playerUniqueCode});
+        //console.log('clientside: ', playerUniqueCode);
       
       socket.on('login', function(msg) {
             usersOnline = msg.users;
@@ -172,9 +209,29 @@ function splitseconds(timerdiv) {
         $('#page-game').show();
         
       });
-    
-
         
+    socket.on('drawoffer', function(drawoffermsg){
+        
+            drawposition = drawoffermsg.posatdraw;
+            new ChessBoard('draw-board', drawposition);
+            $('#modaldraw').show();
+            modal.style.display = 'block';
+        
+            $('#btndrawaccept').on('click', function(){
+                $('#drawacceptreject').html('You have accepted the draw. <br/>Game Result: Draw');
+                socket.emit('drawofferresponse', {drawaccepted: 'true'});
+
+    
+            });
+            $('#btndrawreject').on('click', function(){
+                $('#drawacceptreject').html('');
+                $('#modaldraw').hide();
+                modal.style.display='none';
+                socket.emit('drawofferresponse', {drawaccepted: 'false'});
+    
+            });        
+    });  
+
       socket.on('move', function (msg) {
    
                 if (serverGame && msg.gameId === serverGame.id) {
@@ -199,12 +256,42 @@ function splitseconds(timerdiv) {
             squareToHighlight = msg.move.to;
             colorToHighlight = 'black';    
           }
-    
-                     updateStatus();    
+                    
+            $('#drawbtn').removeAttr('disabled');
+            $('#resignbtn').removeAttr('disabled');
+
+
+//                     updateStatus(); 
+                        statusEl.html(updateStatus);        
+
                  
                 } 
   
-      });  
+      });
+
+        $('#drawbtn').on('click', function(){
+                        socket.emit('drawoffer', {gameid: serverGame.id, sentby: playerColor, posatdraw: game.fen() })
+                        $('#drawbtn').attr('disabled','disabled');
+                        $('#drawbtn').html('Draw offer Sent.');
+                        modal.style.display = 'block';
+                        $('#modaldraw').hide();
+                        $('#drawoffersent').show();
+            socket.on('drawofferresponse', function(rsp){
+               if (rsp.drawaccepted === 'true') {
+                    $('#drawoffersent').html('Opponent accepted the draw. <br/>Game Result: Draw');
+               }
+               if (rsp.drawaccepted === 'false') {
+                    $('#drawoffersent').html('Opponent rejected the draw. <br/><button type="button" id="continuegame">Continue Game</button>');
+                $('#continuegame').on('click', function() {
+                        $('#drawbtn').remove();
+                        $('#drawoffersent').remove();
+                        $('#cotninuegame').remove();
+                        modal.style.display = 'none';
+                });
+               }
+            });
+        });
+        
 
 
  
@@ -297,7 +384,7 @@ function splitseconds(timerdiv) {
         
           var cfg = {
             draggable: true,
-            showNotation: false,
+            showNotation: true,
             orientation: playerColor,
             position: serverGame.board ? serverGame.board : 'start',
             onDragStart: onDragStart,
@@ -337,9 +424,10 @@ function splitseconds(timerdiv) {
                 }
             if(splitseconds("new-w-timer") <= 0){
                 socket.removeAllListeners(init_emitterid_w);
-                var modal = document.getElementById('myModal');
+//                var modal = document.getElementById('myModal');
                 $('#modalresult').html("Result: <strong>Black Wins</strong>. White flag down.")
-                modal.style.display = "block";               
+                modal.style.display = "block";  
+        
 
             }
             });
@@ -356,7 +444,7 @@ function splitseconds(timerdiv) {
                 }
             if(splitseconds("new-w-timer") <= 0){
                 socket.removeAllListeners(init_emitterid_w);
-                        var modal = document.getElementById('myModal');
+//                        var modal = document.getElementById('myModal');
                         $('#modalresult').html("Result: <strong>Black Wins</strong>. White flag down.")
                         modal.style.display = "block";               
 
@@ -365,11 +453,14 @@ function splitseconds(timerdiv) {
             }); 
         }
 
-          updateStatus();
+//          updateStatus();
+            statusEl.html(updateStatus);        
 
       }
 
     var onChange = function(oldPos, newPos) {
+        
+    //start listening to draw offer  
         
         if (username == whiteplayerid){
             //white player stuff
@@ -388,7 +479,7 @@ function splitseconds(timerdiv) {
             
             if ((game.turn() == 'b') || (gamejuststarted == 1)) {
             emitterid_w = "atc-w"+serverGame.id+whiteseconds_w+1;
-                whiteseconds_w = whiteseconds_w + 30; // increment on white board for white move
+                whiteseconds_w = whiteseconds_w + increment; // increment on white board for white move
                 
             }
              console.log("just before emit: ", emitterid_w);                    
@@ -402,18 +493,29 @@ function splitseconds(timerdiv) {
                 }
             if(splitseconds("new-w-timer") <= 0){
                 socket.removeAllListeners(emitterid_w);
-                var modal = document.getElementById('myModal');
+//                var modal = document.getElementById('myModal');
                 $('#modalresult').html("Result: <strong>Black Wins</strong>. White flag down.")
                 modal.style.display = "block";               
 
             }
             if(splitseconds("new-b-timer") <= 0){
                 socket.removeAllListeners(emitterid_w);
-                var modal = document.getElementById('myModal');
+//                var modal = document.getElementById('myModal');
                 $('#modalresult').html("Result: <strong>White Wins</strong>. Black flag down.")
                 modal.style.display = "block";               
 
             }
+            
+            if(game.game_over() || 
+               game.in_stalemate() || 
+               game.in_draw() ||
+               game.in_threefold_repetition()
+              ) {
+                socket.removeAllListeners(emitterid_w);
+                $('#modalresult').html(updateStatus);
+                modal.style.display = "block"
+            }
+
             }); 
 
             
@@ -451,19 +553,28 @@ function splitseconds(timerdiv) {
                 }
             if(splitseconds("new-w-timer") <= 0){
                 socket.removeAllListeners(emitterid_b);
-                var modal = document.getElementById('myModal');
                 $('#modalresult').html("Result: <strong>Black Wins</strong>. White flag down.")
                 modal.style.display = "block";               
 
             }
             if(splitseconds("new-b-timer") <= 0){
                 socket.removeAllListeners(emitterid_b);
-                var modal = document.getElementById('myModal');
+//                var modal = document.getElementById('myModal');
                 $('#modalresult').html("Result: <strong>White Wins</strong>. Black flag down.")
                 modal.style.display = "block";               
 
             }
             }); 
+            
+            if(game.game_over() || 
+               game.in_stalemate() || 
+               game.in_draw() ||
+               game.in_threefold_repetition()
+              ) {
+                socket.removeAllListeners(emitterid_b);
+                $('#modalresult').html(updateStatus);
+                modal.style.display = "block"
+            }
 
         }
           
@@ -518,8 +629,12 @@ function splitseconds(timerdiv) {
 
             socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen(), playeremitted: username, timer_white: e_whiteseconds, timer_black: e_blackseconds, now_playing: game.turn(), gameover: game.game_over() });
 
-                        
-            updateStatus();
+
+            $('#drawbtn').attr('disabled','disabled');
+            $('#resignbtn').attr('disabled','disabled');
+            
+            //updateStatus();
+            statusEl.html(updateStatus);        
             
             
         }
@@ -555,7 +670,7 @@ function splitseconds(timerdiv) {
                   }
 
                   // draw?
-                  else if (game.in_draw() === true) {
+                  else if ( (game.in_draw() === true) ||(game.in_threefold_repetition() == true) ) {
                     status = 'Game over, drawn position';
                   }
 
@@ -569,9 +684,14 @@ function splitseconds(timerdiv) {
                     }
                   }
             
-            statusEl.html(status);        
+//            statusEl.html(status);        
              toggleSound.play();
-       
+            pgnEl.html(game.pgn({ newline_char: '<br />' }));
+            $('#info-pgn').scrollTop($('#info-pgn')[0].scrollHeight);
+
+
+            return(status);        
+
         };
         
         //for move highlighting 

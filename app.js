@@ -6,11 +6,18 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var port = process.env.PORT || 3000;
 
+//for requestify for posting data
+var requestify = require('requestify'); 
+
+
 var lobbyUsers = {};
 var users = {};
 var activeGames = {};
 var i_serverTimerSocketId;
 
+//var myObj;
+//var lovebirds;
+//var mybj ={};
 
 var counter_white, counter_black, servertimer_white, servertimer_black, server_now_playing, serverknown_gameid, w_setInterval, b_setInterval;
 
@@ -19,39 +26,6 @@ var counter_white, counter_black, servertimer_white, servertimer_black, server_n
         
         var myIntervals;
 
-/*
-function server_timer(counter_w, counter_b, ser_now_playing){
-        
-        if (ser_now_playing === 'w'){
-            servertimer_white = setInterval(function(){
-                io.in(msg.gameId).emit('timer_w', counter_w );
-                counter_w--
-                if (counter_w === 0){
-                io.in(msg.gameId).emit('timer_w', '0' );
-                clearInterval(servertimer_white);                
-                }            
-            }, 1000);
-            clearInterval(servertimer_black);
-            io.in(msg.gameId).emit('timer_b', counter_b );         
-            
-        }
-        
-        if (ser_now_playing === 'b'){
-            servertimer_black = setInterval(function(){
-                socket.broadcast.emit('timer_b', counter_b );
-                counter_b--
-                if (counter_b === 0){
-                io.in(msg.gameId).emit('timer_b', '0' );
-                clearInterval(servertimer_black);                
-                }            
-            }, 1000);
-            clearInterval(servertimer_white);
-            io.in(msg.gameId).emit('timer_w', counter_w );         
-            
-        }    
-        
-    }
-*/
 
 app.get('/', function(req, res) {
  res.sendFile(__dirname + '/public/default.html');
@@ -64,6 +38,23 @@ app.get('/dashboard/', function(req, res) {
 
 io.on('connection', function(socket) {
     console.log('new connection ' + socket);
+    
+//    socket.on('playerUniqueID', function(p){
+//        var senddata = {playeruniqueid: p.playeruniqueid }
+//        requestify.request('http://superkidschess.com/android/simpleTest.php?name=naveen', {
+//            method: 'GET', 
+//            dataType: 'json'
+//        })
+//            .then(function(response) {
+//                // Get the response body
+//                 myObj = response.body;
+//            //console.log('The Love Birds are: ', myObj);
+//                mybj = JSON.parse(myObj);
+//                lovebirds = mybj.navresult;
+//
+//            });           
+//    });
+
     
     socket.on('login', function(userId) {
        doLogin(socket, userId);
@@ -141,7 +132,13 @@ io.on('connection', function(socket) {
         }
     });
     
-
+socket.on('drawoffer', function(drawoffermsg){
+    socket.broadcast.emit('drawoffer', drawoffermsg);
+});
+    
+socket.on('drawofferresponse', function(resp){
+    socket.broadcast.emit('drawofferresponse', resp);
+});
     
     socket.on('move', function(msg) {
         counter_white = msg.timer_white;

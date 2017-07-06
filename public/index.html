@@ -27,12 +27,25 @@
       </div>
     </div>
     <div class="page game" id='page-game'>
+<!--
       <button id='game-back'>Back</button>
       <button id='game-resign'>Resign</button>
-        <div id='player1'><span id='player1name'>White</span>: <span id='new-w-timer'></span></div>
+-->
+        <h1>ATC Online Platform: Classic Chess</h1>
+        <hr>
+        <p><div id='player1'><span id='player1name'>White</span>: <span id='new-w-timer'></span></div>
         <div id='player2'><span id='player2name'>Black</span>: <span id='new-b-timer'></span></div>
-      <div id='game-board' style="width: 400px"></div>
-        <div id='info-status'><p>Status: <span id="status"></span></p></div>
+        </p>
+      <div id='game-board'></div>
+        <div id='sidebar'>
+            <div id='info-pgn'><p>Notations: <br/><span id='pgn'></span></p></div>
+            <div id='info-status'><p>Status: <span id="status"></span></p></div>   
+            <div id='info-actionbtns'><span id="actionbtns">
+                <button type='button' id='drawbtn' disabled>Draw</button>
+                <button type='button' id='resignbtn' disabled>Resign</button>
+                </span></div>   
+        </div>
+        <div style='clear:both;'></div>
             <audio id="myaudio">
               <source src="audio/toggle.ogg" type="audio/ogg">
               <source src="audio/toggle.mp3" type="audio/mpeg">
@@ -45,7 +58,19 @@
 
   <!-- Modal content -->
   <div class="modal-content">
-    <p><span id="modalresult">Game over.</span></p>
+    <p><div id="modalresult"></div></p>
+    <p><div id="modaldraw" style="display:none;">
+        <div id='drawacceptreject' style='float:left; width: 300px; margin: 10px;'>
+        <p>Opponent has sent you a Draw Offer. <br/><br/>Do you want to Accept or Reject? </p>
+            <button type='button' id='btndrawaccept'>Accept Draw Offer</button>
+            <button type='button' id='btndrawreject'>Reject Draw Offer</button>
+        </div>
+        <div id='draw-board' style='width: 300px; float: left; margin: 10px;'></div>
+        <div style='clear:both'></div>
+      </div>
+    </p>
+    <div id='drawoffersent' style='display:none;'>Draw Offer Sent. Waiting for Opponent's Response...</div>
+
   </div>
 
 </div>
